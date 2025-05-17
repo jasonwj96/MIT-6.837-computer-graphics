@@ -1,0 +1,6 @@
+*.pdf
+Debug
+*.exe
+.vs
+.idea
+*.obj
