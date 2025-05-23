@@ -20,9 +20,15 @@ std::vector<std::vector<unsigned> > vecf;
 std::vector<int> vertexIndices;
 std::vector<int> normalIndices;
 
-int currentColorIndex = 0;
+int color = 0;
 int lightPositionX = 1.0f;
 int lightPositionY = 1.0f;
+
+bool is_rotating = false;
+int rotation_request = 0;
+
+float angle = 0;
+const float rotation_speed = 1;
 
 // You will need more global variables to implement color and position changes
 
@@ -37,12 +43,41 @@ void parseFaceComponent(const std::string& component, int& vertexIndex,
   size_t firstSlash = component.find('/');
   size_t lastSlash = component.rfind('/');
 
-  vertexIndex =
-      std::stoi(component.substr(0, firstSlash)) - 1;  // OBJ is 1-based
+  vertexIndex = std::stoi(component.substr(0, firstSlash)) - 1;
   normalIndex = std::stoi(component.substr(lastSlash + 1)) - 1;
 }
 
-void importMesh(const std::filesystem::path filePath) {
+void drawObject() {
+  for (const auto& face : vecf) {
+    auto a = face[0];
+    auto c = face[1];
+    auto d = face[2];
+    auto f = face[3];
+    auto g = face[4];
+    auto i = face[5];
+
+    glBegin(GL_TRIANGLES);
+    glNormal(vecn[c - 1]);
+    glVertex(vecv[a - 1]);
+    glNormal(vecn[f - 1]);
+    glVertex(vecv[d - 1]);
+    glNormal(vecn[i - 1]);
+    glVertex(vecv[g - 1]);
+    glEnd();
+  }
+}
+
+void updateFunc(int value) {
+  if (value != rotation_request) return;
+
+  glutTimerFunc(1000 / 60, updateFunc, value);
+
+  angle = fmod(angle + rotation_speed, 360);
+
+  glutPostRedisplay();
+}
+
+void loadInput(const std::filesystem::path filePath) {
   if (filePath.empty()) {
     std::cout << "The file path is invalid.";
     return;
@@ -91,24 +126,19 @@ void importMesh(const std::filesystem::path filePath) {
       }
 
       if (tag == "f") {
-        std::string v1, v2, v3;
+        std::string abc, def, ghi;
+        stream >> abc >> def >> ghi;
 
-        stream >> v1 >> v2 >> v3;
+        unsigned int a, b, c;
+        sscanf(abc.c_str(), "%u/%u/%u", &a, &b, &c);
 
-        printf("f: {%s, %s, %s}\n", v1.c_str(), v2.c_str(), v3.c_str());
+        unsigned int d, e, f;
+        sscanf(def.c_str(), "%u/%u/%u", &d, &e, &f);
 
-        int vi, ni;
-        parseFaceComponent(v1, vi, ni);
-        vertexIndices.push_back(vi);
-        normalIndices.push_back(ni);
+        unsigned int g, h, i;
+        sscanf(ghi.c_str(), "%u/%u/%u", &g, &h, &i);
 
-        parseFaceComponent(v2, vi, ni);
-        vertexIndices.push_back(vi);
-        normalIndices.push_back(ni);
-
-        parseFaceComponent(v3, vi, ni);
-        vertexIndices.push_back(vi);
-        normalIndices.push_back(ni);
+        vecf.push_back({a, c, d, f, g, i});
       }
     }
   }
@@ -123,13 +153,23 @@ void keyboardFunc(unsigned char key, int x, int y) {
       exit(0);
       break;
     case 'c':
-      currentColorIndex++;
+      color++;
 
-      if (currentColorIndex > 3) {
-        currentColorIndex = 0;
+      if (color > 3) {
+        color = 0;
       }
-    case 'd':
-      importMesh("sphere.obj");
+      break;
+    case 'r':
+      is_rotating = !is_rotating;
+      if (is_rotating) {
+        updateFunc(rotation_request);
+      } else {
+        rotation_request++;
+      }
+
+      std::cout << (is_rotating ? "Started" : "Stopped") << " rotating."
+                << std::endl;
+
       break;
     default:
       std::cout << "Unhandled key press " << key << "." << std::endl;
@@ -185,8 +225,7 @@ void drawScene(void) {
                               {0.3, 0.8, 0.9, 1.0}};
 
   // Here we use the first color entry as the diffuse color
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-               diffColors[currentColorIndex]);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, diffColors[color]);
 
   // Define specular color and shininess
   GLfloat specColor[] = {1.0, 1.0, 1.0, 1.0};
@@ -208,7 +247,9 @@ void drawScene(void) {
 
   // This GLUT method draws a teapot.  You should replace
   // it with code which draws the object you loaded.
-  glutSolidTeapot(1.0);
+  // glutSolidTeapot(1.0);
+
+  drawObject();
 
   // Dump the image to the screen.
   glutSwapBuffers();
@@ -238,16 +279,10 @@ void reshapeFunc(int w, int h) {
   gluPerspective(50.0, 1.0, 1.0, 100.0);
 }
 
-void loadInput() {
-  // load the OBJ file here
-}
-
 // Main routine.
 // Set up OpenGL, define the callbacks and start the main loop
 int main(int argc, char** argv) {
-  importMesh("sphere.obj");
-
-  loadInput();
+  loadInput("garg.obj");
 
   glutInit(&argc, argv);
 
