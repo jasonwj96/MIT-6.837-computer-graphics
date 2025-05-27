@@ -21,8 +21,6 @@
 #include "extra.h"
 #include "camera.h"
 
-using namespace std;
-
 // If you're really interested in what "namespace" means, see
 // Stroustup.  But basically, the functionality of putting all the
 // globals in an "unnamed namespace" is to ensure that everything in
@@ -55,11 +53,11 @@ namespace
     // surfaces that will end up being drawn.  In addition, parallel
     // STL vectors store the names for the curves and surfaces (as
     // given by the files).
-    vector<vector<Vector3f> > gCtrlPoints;
-    vector<Curve> gCurves;
-    vector<string> gCurveNames;
-    vector<Surface> gSurfaces;
-    vector<string> gSurfaceNames;
+    std::vector<std::vector<Vector3f> > gCtrlPoints;
+    std::vector<Curve> gCurves;
+    std::vector<std::string> gCurveNames;
+    std::vector<Surface> gSurfaces;
+    std::vector<std::string> gSurfaceNames;
 
     // Declarations of functions whose implementations occur later.
     void arcballRotation(int endX, int endY);
@@ -81,7 +79,6 @@ namespace
         {
         case 27: // Escape key
             exit(0);
-            break;
         case ' ':
         {
             Matrix4f eye = Matrix4f::identity();
@@ -102,7 +99,7 @@ namespace
             gPointMode = (gPointMode+1)%2;
             break;            
         default:
-            cout << "Unhandled key press " << key << "." << endl;        
+            std::cout << "Unhandled key press " << key << "." << std::endl;
         }
 
         glutPostRedisplay();
@@ -263,25 +260,25 @@ namespace
     {
         if (argc < 2)
         {
-            cerr<< "usage: " << argv[0] << " SWPFILE [OBJPREFIX] " << endl;
+            std::cerr<< "usage: " << argv[0] << " SWPFILE [OBJPREFIX] " << std::endl;
             exit(0);
         }
 
-        ifstream in(argv[1]);
+        std::ifstream in(argv[1]);
         if (!in)
         {
-            cerr<< argv[1] << " not found\a" << endl;
+            std::cerr<< argv[1] << " not found\a" << std::endl;
             exit(0);
         }
 
-        
-        cerr << endl << "*** loading and constructing curves and surfaces ***" << endl;
+
+        std::cerr << std::endl << "*** loading and constructing curves and surfaces ***" << std::endl;
         
         if (!parseFile(in, gCtrlPoints,
                        gCurves, gCurveNames,
                        gSurfaces, gSurfaceNames))
         {
-            cerr << "\aerror in file format\a" << endl;
+            std::cerr << "\aerror in file format\a" << std::endl;
             in.close();
             exit(-1);              
         }
@@ -291,38 +288,38 @@ namespace
         // This does OBJ file output
         if (argc > 2)
         {
-            cerr << endl << "*** writing obj files ***" << endl;
-            
-            string prefix(argv[2]);
+            std::cerr << std::endl << "*** writing obj files ***" << std::endl;
+
+            std::string prefix(argv[2]);
 
             for (unsigned i=0; i<gSurfaceNames.size(); i++)
             {
                 if (gSurfaceNames[i] != ".")
                 {
-                    string filename =
-                        prefix + string("_")
+                    std::string filename =
+                        prefix + std::string("_")
                         + gSurfaceNames[i]
-                        + string(".obj");
+                        + std::string(".obj");
 
-                    ofstream out(filename.c_str());
+                    std::ofstream out(filename.c_str());
 
                     if (!out)
                     {
-                        cerr << "\acould not open file " << filename << ", skipping"<< endl;
+                        std::cerr << "\acould not open file " << filename << ", skipping"<< std::endl;
                         out.close();
                         continue;
                     }
                     else
                     {
                         outputObjFile(out, gSurfaces[i]);
-                        cerr << "wrote " << filename <<  endl;
+                        std::cerr << "wrote " << filename << std::endl;
                     }
                 }
             }
             
         }
 
-        cerr << endl << "*** done ***" << endl;
+        std::cerr << std::endl << "*** done ***" << std::endl;
 
 
     }
