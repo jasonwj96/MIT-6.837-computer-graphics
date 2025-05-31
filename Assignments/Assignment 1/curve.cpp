@@ -57,8 +57,29 @@ Curve evalBezier( const vector< Vector3f >& P, unsigned steps )
     cerr << "\t>>> Steps (type steps): " << steps << endl;
     cerr << "\t>>> Returning empty curve." << endl;
 
-    // Right now this will just return this empty curve.
-    return Curve();
+    // Preallocate a curve with steps+1 CurvePoints
+    Curve curve(steps + 1);
+
+    // Fill it in counterclockwise
+    for (unsigned i = 0; i <= steps; ++i) {
+        // step from 0 to 2pi
+        const float t = M_PI * 2.0f * static_cast<float>(i) / steps;
+
+        // Initialize position
+        // We're pivoting counterclockwise around the y-axis
+        curve[i].V = 2.0f * Vector3f(cos(t), sin(t), 0);
+
+        // Tangent vector is first derivative
+        curve[i].T = Vector3f(-sin(t), cos(t), 0);
+
+        // Normal vector is second derivative
+        curve[i].N = Vector3f(-cos(t), -sin(t), 0);
+
+        // Finally, binormal is facing up.
+        curve[i].B = Vector3f(0, 0, 1);
+    }
+
+    return curve;
 }
 
 Curve evalBspline( const vector< Vector3f >& P, unsigned steps )
