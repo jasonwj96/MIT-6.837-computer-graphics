@@ -67,10 +67,10 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
   Curve curve(subCurveCount * steps + 1);
 
   Matrix4f matBernstein(
-    1.0f, -3.0f, 6.0f, -1.0f,
+    1.0f, -3.0f, 3.0f, -1.0f,
     0.0f, 3.0f, -6.0f, 3.0f,
-    0.0f, 0.0f, 3.0f, 3.0f,
-    0.0f, 0.0f, 0.0f, 3.0f
+    0.0f, 0.0f, 3.0f, -3.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
   );
 
   Matrix4f matBernsteinPrime(
@@ -81,13 +81,12 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
   );
 
 
-  Vector3f binorm;
   Vector3f prevBinorm;
 
   int k = 0;
 
   for (unsigned i = 0; i < P.size() - 3; i += 3) {
-    binorm = (i == 0) ? Vector3f(0.0f, 0.0f, 1.0f) : prevBinorm;
+    Vector3f binorm = i == 0 ? Vector3f(0.0f, 0.0f, 1.0f) : prevBinorm;
 
 
     Matrix4f controlPoints(
@@ -123,28 +122,10 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
       // Finally, binormal is facing up.
       curve[k].B = Vector3f::cross(curve[k].T, curve[k].N).normalized();
 
+      prevBinorm = curve[k].B;
+
       ++k;
     }
-  }
-
-
-  // Fill it in counterclockwise
-  for (unsigned i = 0; i <= steps; ++i) {
-    // step from 0 to 2pi
-    const float t = M_PI * 2.0f * static_cast<float>(i) / steps;
-
-    // Initialize position
-    // We're pivoting counterclockwise around the y-axis
-    curve[i].V = 2.0f * Vector3f(cos(t), sin(t), 0);
-
-    // Tangent vector is first derivative
-    curve[i].T = Vector3f(-sin(t), cos(t), 0);
-
-    // Normal vector is second derivative
-    curve[i].N = Vector3f(-cos(t), -sin(t), 0);
-
-    // Finally, binormal is facing up.
-    curve[i].B = Vector3f(0, 0, 1);
   }
 
   return curve;
