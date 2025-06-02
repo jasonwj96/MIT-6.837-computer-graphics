@@ -48,8 +48,6 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
   }
 
   cerr << "\t>>> Steps (type steps): " << steps << endl;
-  cerr << "\t>>> Returning empty curve." << endl;
-
 
   int subCurveCount = 0;
   int pCount = 0;
@@ -131,22 +129,16 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
 }
 
 Curve evalBspline(const vector<Vector3f> &P, unsigned steps) {
-  // Check
   if (P.size() < 4) {
     cerr << "evalBspline must be called with 4 or more control points." << endl;
     exit(0);
   }
 
-  // TODO:
-  // It is suggested that you implement this function by changing
-  // basis from B-spline to Bezier.  That way, you can just call
-  // your evalBezier function.
-
   cerr << "\t>>> evalBSpline has been called with the following input:" << endl;
 
-  cerr << "\t>>> Control points (type vector< Vector3f >): " << endl;
-  for (unsigned i = 0; i < P.size(); ++i) {
-    cerr << "\t>>> " << P[i] << endl;
+  cerr << "\t>>> Control points (type vector<Vector3f>): " << endl;
+  for (const auto &i: P) {
+    cerr << "\t>>> " << i << endl;
   }
 
   cerr << "\t>>> Steps (type steps): " << steps << endl;
@@ -201,6 +193,12 @@ Curve evalBspline(const vector<Vector3f> &P, unsigned steps) {
     temp[2] = col[2];
     newP.push_back(temp);
 
+    col = G_bar.getCol(2);
+    temp[0] = col[0];
+    temp[1] = col[1];
+    temp[2] = col[2];
+    newP.push_back(temp);
+
     col = G_bar.getCol(3);
     temp[0] = col[0];
     temp[1] = col[1];
@@ -209,7 +207,7 @@ Curve evalBspline(const vector<Vector3f> &P, unsigned steps) {
 
     Curve subR(4 * steps);
 
-    subR = evalBezier(newP,  steps);
+    subR = evalBezier(newP, steps);
 
     for (unsigned j = 1; j < subR.size(); ++j) {
       CurvePoint P_t;
