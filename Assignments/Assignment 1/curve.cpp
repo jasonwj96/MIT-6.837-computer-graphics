@@ -81,13 +81,12 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
   );
 
 
-  Vector3f prevBinorm;
+  Vector3f prevBinormal;
 
   int k = 0;
 
   for (unsigned i = 0; i < P.size() - 3; i += 3) {
-    Vector3f binorm = i == 0 ? Vector3f(0.0f, 0.0f, 1.0f) : prevBinorm;
-
+    Vector3f binormal = i == 0 ? Vector3f(0.0f, 0.0f, 1.0f) : prevBinormal;
 
     Matrix4f controlPoints(
       P[i][0], P[i + 1][0], P[i + 2][0], P[i + 3][0],
@@ -117,12 +116,12 @@ Curve evalBezier(const vector<Vector3f> &P, unsigned steps) {
       ).normalized();
 
       // Normal vector is second derivative
-      curve[k].N = Vector3f::cross(binorm, curve[k].T).normalized();
+      curve[k].N = Vector3f::cross(binormal, curve[k].T).normalized();
 
       // Finally, binormal is facing up.
       curve[k].B = Vector3f::cross(curve[k].T, curve[k].N).normalized();
 
-      prevBinorm = curve[k].B;
+      prevBinormal = curve[k].B;
 
       ++k;
     }
@@ -153,8 +152,78 @@ Curve evalBspline(const vector<Vector3f> &P, unsigned steps) {
   cerr << "\t>>> Steps (type steps): " << steps << endl;
   cerr << "\t>>> Returning empty curve." << endl;
 
-  // Return an empty curve right now.
-  return Curve();
+  Curve curve;
+
+  const Matrix4f matBSpline(
+    1.0f / 6, -3.0f / 6, 3.0f / 6, -1.0f / 6,
+    4.0f / 6, 0.0f, -6.0f / 6, 3.0f / 6,
+    1.0f / 6, 3.0f / 6, 3.0f / 6, -3.0f / 6,
+    0.0f, 0.0f, 0.0f, 1.0f / 6
+  );
+
+
+  const Matrix4f matBernstein(
+    1.0f, -3.0f, 3.0f, -1.0f,
+    0.0f, 3.0f, -6.0f, 3.0f,
+    0.0f, 0.0f, 3.0f, -3.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+  );
+
+
+  bool singular;
+  const Matrix4f matBernsteinInverse = matBernstein.inverse(&singular);
+
+
+  for (unsigned i = 0; i < P.size() - 3; ++i) {
+    Matrix4f controlPoints(
+      P[i][0], P[i + 1][0], P[i + 2][0], P[i + 3][0],
+      P[i][1], P[i + 1][1], P[i + 2][1], P[i + 3][1],
+      P[i][2], P[i + 1][2], P[i + 2][2], P[i + 3][2],
+      0.0f, 0.0f, 0.0f, 0.0f
+    );
+
+    Matrix4f G_bar = controlPoints * matBSpline * matBernsteinInverse;
+
+    vector<Vector3f> newP;
+    Vector3f temp;
+
+    // change this
+    Vector4f col = G_bar.getCol(0);
+    temp[0] = col[0];
+    temp[1] = col[1];
+    temp[2] = col[2];
+    newP.push_back(temp);
+
+
+    col = G_bar.getCol(1);
+    temp[0] = col[0];
+    temp[1] = col[1];
+    temp[2] = col[2];
+    newP.push_back(temp);
+
+    col = G_bar.getCol(3);
+    temp[0] = col[0];
+    temp[1] = col[1];
+    temp[2] = col[2];
+    newP.push_back(temp);
+
+    Curve subR(4 * steps);
+
+    subR = evalBezier(newP,  steps);
+
+    for (unsigned j = 1; j < subR.size(); ++j) {
+      CurvePoint P_t;
+
+      P_t.V = subR[j].V;
+      P_t.T = subR[j].T;
+      P_t.N = subR[j].N;
+      P_t.B = subR[j].B;
+
+      curve.push_back(P_t);
+    }
+  }
+
+  return curve;
 }
 
 Curve evalCircle(float radius, unsigned steps) {
