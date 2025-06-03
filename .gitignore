@@ -5,3 +5,4 @@ Debug
 .idea
 *.obj
 cmake-build-debug
+build
