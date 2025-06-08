@@ -7,13 +7,7 @@ file(GLOB VECMATH_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/vecmath/src/*.cpp"
 )
 
-file(GLOB PROJECT_SOURCES
-        "camera.cpp"
-        "curve.cpp"
-        "parse.cpp"
-        "surf.cpp"
-        "main.cpp"
-)
+file(GLOB PROJECT_SOURCES "*.cpp")
 
 
 find_package(OpenGL REQUIRED)
